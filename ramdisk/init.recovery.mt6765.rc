@@ -1,0 +1,97 @@
+
+on init
+    setprop sys.usb.controller musb-hdrc
+
+on property:ro.mtk_emmc_support=1
+    # Support A/B feature for emmc boot region
+    symlink /dev/block/mmcblk0boot0 /dev/block/platform/bootdevice/by-name/preloader_a
+    symlink /dev/block/mmcblk0boot1 /dev/block/platform/bootdevice/by-name/preloader_b
+
+on property:ro.mtk_ufs_booting=1
+    # Support A/B feature for ufs boot region
+    symlink /dev/block/sda /dev/block/platform/bootdevice/by-name/preloader_a
+    symlink /dev/block/sdb /dev/block/platform/bootdevice/by-name/preloader_b
+
+
+on fs
+    write /proc/bootprof "start mobicore (on fs)"
+    chmod 0600 /dev/mobicore
+    chown system system /dev/mobicore
+    chmod 0666 /dev/mobicore-user
+    chown system system /dev/mobicore-user
+    write /proc/bootprof "start mobicore end (on fs)"
+
+
+# Separate copy needed to use /sbin/linker64 instead of /system/bin/linker64
+service teei_daemon /sbin/teei_daemon
+    user root
+    group root
+    disabled
+    seclabel u:r:recovery:s0
+
+####
+on property:hwservicemanager.ready=true
+    start teei_daemon
+
+
+
+
+on early-init
+    start fingerprintid
+
+# read ro.build.fingerprint from system, setprop it. for ota
+service fingerprintid /init.fingerprintid.sh
+    oneshot
+    disabled
+    user root
+    group root
+    seclabel u:r:recovery:s0
+
+
+on boot
+    # Enable Power modes and set the CPU Freq Sampling rates
+    write /proc/hps/enabled 0
+    write /sys/devices/system/cpu/cpu1/online 1
+    write /sys/devices/system/cpu/cpu2/online 1
+    write /sys/devices/system/cpu/cpu3/online 1
+    write /sys/devices/system/cpu/cpu4/online 1
+    write /sys/devices/system/cpu/cpu5/online 1
+    write /sys/devices/system/cpu/cpu6/online 1
+    write /sys/devices/system/cpu/cpu7/online 1
+    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor "ondemand"
+    write /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor "ondemand"
+    write /sys/devices/system/cpu/cpu2/cpufreq/scaling_governor "ondemand"
+    write /sys/devices/system/cpu/cpu3/cpufreq/scaling_governor "ondemand"
+    write /sys/devices/system/cpu/cpu4/cpufreq/scaling_governor "ondemand"
+    write /sys/devices/system/cpu/cpu5/cpufreq/scaling_governor "ondemand"
+    write /sys/devices/system/cpu/cpu6/cpufreq/scaling_governor "ondemand"
+    write /sys/devices/system/cpu/cpu7/cpufreq/scaling_governor "ondemand"
+    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq 300000
+    write /sys/devices/system/cpu/cpu1/cpufreq/scaling_min_freq 300000
+    write /sys/devices/system/cpu/cpu2/cpufreq/scaling_min_freq 300000
+    write /sys/devices/system/cpu/cpu3/cpufreq/scaling_min_freq 300000
+    write /sys/devices/system/cpu/cpu4/cpufreq/scaling_min_freq 300000
+    write /sys/devices/system/cpu/cpu5/cpufreq/scaling_min_freq 300000
+    write /sys/devices/system/cpu/cpu6/cpufreq/scaling_min_freq 300000
+    write /sys/devices/system/cpu/cpu7/cpufreq/scaling_min_freq 300000
+    #write /sys/module/msm_thermal/core_control/enabled 1
+    setprop recovery.perf.mode 0
+
+
+on property:recovery.perf.mode=1
+    write /sys/devices/system/cpu/cpu1/online 1
+    write /sys/devices/system/cpu/cpu2/online 1
+    write /sys/devices/system/cpu/cpu3/online 1
+    write /sys/devices/system/cpu/cpu4/online 1
+    write /sys/devices/system/cpu/cpu5/online 1
+    write /sys/devices/system/cpu/cpu6/online 1
+    write /sys/devices/system/cpu/cpu7/online 1
+
+on property:recovery.perf.mode=0
+    write /sys/devices/system/cpu/cpu1/online 1
+    write /sys/devices/system/cpu/cpu2/online 0
+    write /sys/devices/system/cpu/cpu3/online 0
+    write /sys/devices/system/cpu/cpu4/online 1
+    write /sys/devices/system/cpu/cpu5/online 1
+    write /sys/devices/system/cpu/cpu6/online 0
+    write /sys/devices/system/cpu/cpu7/online 0
